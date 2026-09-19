@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+bin/
+.tunnel/
+.env*
+*.log
+desktop-build/
+dist/
+.agent-learning/
+settings.json
+key.bin
+runtime-key.dpapi
+data/
+*.exe
+*.zip

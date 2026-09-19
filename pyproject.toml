@@ -1,0 +1,9 @@
+[project]
+name = "obsidian-chatgpt-mcp"
+version = "0.1.0"
+description = "Read-only DigitalBrain access for ChatGPT"
+requires-python = ">=3.12"
+dependencies = ["mcp==2.2.0"]
+
+[tool.uv]
+package = false
