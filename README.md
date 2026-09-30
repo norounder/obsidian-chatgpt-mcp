@@ -10,9 +10,15 @@ Choose your Vault, configure a Secure MCP Tunnel, and register the connection in
 
 On September 20, 2026, the author confirmed installation, Windows tunnel connectivity, and reading notes from ChatGPT on their PC. Startup issues involving missing scheduled tasks and tunnel logging options were fixed before that confirmation.
 
-The help tab was added afterward and has **not yet been verified in a Windows build or visual check**. Its illustrations explain the steps; they are not screenshots of the actual ChatGPT or Platform interface.
+The help tab was added afterward and is included in the Windows preview build. Its UI has **not yet been visually verified**, and the exact preview installer has not had a fresh end-to-end installation test. Its illustrations explain the steps; they are not screenshots of the actual ChatGPT or Platform interface.
 
-This repository currently provides source code only. There is no verified installer release to download. The Windows build requires a separately prepared dependency bundle; it is not a one-command build from a fresh clone.
+## Download for Windows
+
+[Download the Windows x64 preview installer](https://github.com/norounder/obsidian-chatgpt-mcp/releases/download/v0.2.0-preview.1/ObsidianChatGPT-Setup.exe) · [Release notes and checksum](https://github.com/norounder/obsidian-chatgpt-mcp/releases/tag/v0.2.0-preview.1)
+
+The installer bundles Python and tunnel-client; recipients do not need Python or WSL. This is an **unsigned prerelease**, not a stable release. Read the verification limits in the release notes before installing.
+
+Building from source still requires a separately prepared dependency bundle; it is not a one-command build from a fresh clone.
 
 ## What it does
 
