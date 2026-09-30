@@ -1,62 +1,163 @@
 # Obsidian → ChatGPT MCP
 
-임의의 Obsidian Vault를 읽기 전용 MCP 도구로 연결하는 서버와 Windows 설정 UI입니다. 특정 폴더 구조를 요구하지 않습니다. OpenAI 또는 Obsidian의 공식 앱이 아닙니다.
+Connect an Obsidian Vault to ChatGPT through a read-only MCP server and a lightweight Windows desktop app.
 
-## 현재 상태
+Choose your Vault, configure a Secure MCP Tunnel, and register the connection in ChatGPT. No `DigitalBrain`, `wiki`, or other folder convention is required.
 
-초기 개발 버전입니다. 2026-09-20 사용자 Windows PC에서 설치, 터널 연결, ChatGPT에서 노트 읽기를 확인했습니다. 설치 시 예약 작업 예외 처리와 터널 로그 형식 누락 오류는 수정했습니다.
+**Early development release.** This is an independent project, not an official OpenAI or Obsidian application. The Windows interface and in-app help are currently in Korean.
 
-이후 추가한 도움말 탭은 아직 Windows 빌드·화면 검증 전입니다. 기본 안내는 Vault 선택 → Tunnel·키 발급 → 앱에 저장·연결 → ChatGPT 플러그인 등록 순서입니다. 그림은 실제 웹 화면 캡처가 아닌 절차 설명용입니다. 현재 저장소는 소스만 제공하며 검증된 설치 파일 릴리스는 없습니다.
+## Project status
 
-## 기능
+On September 20, 2026, the author confirmed installation, Windows tunnel connectivity, and reading notes from ChatGPT on their PC. Startup issues involving missing scheduled tasks and tunnel logging options were fixed before that confirmation.
 
-- `list_notes`: Vault의 Markdown 파일 목록과 페이지 탐색
-- `search`: 제목·본문 검색, 제목 우선 정렬
-- `fetch`: 상대 경로의 본문 일부 읽기
-- `resolve_link`: 위키 링크 후보 해석, 동명 문서 후보 반환
+The help tab was added afterward and has **not yet been verified in a Windows build or visual check**. Its illustrations explain the steps; they are not screenshots of the actual ChatGPT or Platform interface.
 
-숨김 항목, 심볼릭 링크, Windows junction을 통한 외부 접근을 제한합니다. 읽은 노트 내용은 요청을 처리하는 ChatGPT에 전달됩니다. 파일을 수정하거나 삭제하는 도구는 없습니다.
+This repository currently provides source code only. There is no verified installer release to download. The Windows build requires a separately prepared dependency bundle; it is not a one-command build from a fresh clone.
 
-Windows UI에는 Vault 선택, Tunnel ID, 암호화된 Runtime API 키 저장, 연결 상태, 로그인 자동 연결 설정이 있습니다. 키는 현재 Windows 사용자 계정의 DPAPI로 암호화합니다. 저장된 키는 화면에 재표시하지 않으며, 변경 버튼으로 새 값을 입력하고 저장할 수 있습니다.
+## What it does
 
-## 서버 실행
+| Tool | Purpose |
+| --- | --- |
+| `list_notes` | Browse Markdown files with folder filtering and pagination. |
+| `search` | Search titles and contents, with title matches ranked first. |
+| `fetch` | Read part of a note using its path relative to the selected Vault. |
+| `resolve_link` | Find candidate notes for a wiki link, including ambiguous names. |
 
-Python 3.12 이상에서 프로젝트 의존성을 설치한 뒤 실행합니다.
+The Windows app provides a folder picker, Tunnel ID and Runtime API key settings, connection status, optional startup at Windows login, and offline help.
+
+The MCP tools do not edit or delete notes. The server restricts access to the selected folder and excludes hidden entries, symbolic links, and Windows junctions.
+
+## How it connects
+
+```text
+ChatGPT plugin
+    ↕ Secure MCP Tunnel
+Windows tunnel-client
+    ↕ MCP over stdio
+Python server → selected Vault's Markdown files
+```
+
+The app manages the local connection. Registering the plugin in ChatGPT is a separate step. Starting the server alone does not create a ChatGPT plugin.
+
+## Setup guide
+
+These steps apply once you have built and installed the Windows app. The intended desktop target is Windows 10/11 x64.
+
+### 1. Select your Vault
+
+In the connection settings tab (`연결 설정`), use the folder picker (`폴더 선택`) to select your Obsidian Vault's top-level folder. Markdown notes in its subfolders are included. Select a subfolder instead if you only want to expose that part of the Vault.
+
+### 2. Create a tunnel and a Runtime API key
+
+Open [Platform tunnel settings](https://platform.openai.com/settings/organization/tunnels) and configure a Secure MCP Tunnel associated with the ChatGPT workspace you intend to use. Copy its Tunnel ID.
+
+Use [Platform key settings](https://platform.openai.com/settings/organization/api-keys) to obtain a Runtime API key with access to that tunnel. Follow the [official Secure MCP Tunnel guide](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels) for current permissions and workspace requirements.
+
+Each user supplies their own tunnel and key. Do not paste API keys into chats, issues, or this repository.
+
+### 3. Save and connect in the app
+
+Enter the Tunnel ID and Runtime API key, then select **Save and connect** (`저장하고 연결`). Typing a replacement key does not save it immediately: select **Change** (`변경`), enter the new key, then save. **Cancel** (`취소`) keeps the previous key.
+
+**Key saved** (`키 저장됨`) indicates storage status. **Local connection ready** (`로컬 연결 준비됨`) indicates tunnel readiness; it does not confirm ChatGPT registration.
+
+Closing the settings window leaves the background connection running. Use **Stop connection** (`연결 중지`) to stop it. Optional login startup uses Windows Task Scheduler. The connection is unavailable while the computer is asleep, signed out, or powered off.
+
+### 4. Register the plugin in ChatGPT
+
+Enable developer mode if it is available for your account and workspace. Open [ChatGPT Plugins](https://chatgpt.com/plugins), add a connection, choose **Tunnel**, and select or enter your Tunnel ID. Review the discovered tools and complete any installation or access prompts.
+
+Select the plugin from the tools menu in your conversation. See the [official plugin connection guide](https://developers.openai.com/plugins/deploy/connect-chatgpt) for current UI details and account requirements.
+
+## Example request
+
+With the plugin selected, try:
+
+> List five notes in my Obsidian Vault.
+
+Or search for a topic and ask ChatGPT to cite the note paths it used.
+
+## Troubleshooting
+
+- **ChatGPT still shows a Connect button:** Try refreshing the plugin metadata from its detail page, then select it in a new conversation. This is an optional troubleshooting step, not part of every setup.
+- **The tunnel is missing in ChatGPT:** Check its association with the intended ChatGPT workspace and your tunnel permissions.
+- **The key is saved but connection fails:** Saving a key does not validate it. Check the app's authentication, permission, or network message.
+- **A readiness check passes but notes cannot be read:** Confirm the plugin is registered and selected, then make an actual tool request. Tunnel readiness alone is not an end-to-end test.
+
+When reporting a problem, include the step that failed and the error text. Remove keys, private note contents, and personal paths from screenshots or logs.
+
+## Data handling
+
+Notes returned by the tools are sent to ChatGPT to process your request. Read-only access does not mean the returned content stays entirely on your PC.
+
+The desktop app stores the Runtime API key using Windows DPAPI for the current Windows user. It does not display the stored key in the UI. Local settings retain the selected Vault path, Tunnel ID, and startup preference. Keys, user settings, Vault contents, and runtime logs are excluded from the published source.
+
+## Run the MCP server directly
+
+The Python server can run independently of the desktop app. Use Python 3.12 or newer and install the pinned MCP dependency in your preferred virtual environment:
 
 ```sh
 python -m pip install 'mcp==2.2.0'
 python server.py --vault '/path/to/your/vault'
 ```
 
-서버는 stdio 방식입니다. ChatGPT 연결에는 사용자의 Secure MCP Tunnel과 해당 권한을 가진 Runtime API 키, 별도의 ChatGPT 연결 등록이 필요합니다. 서버 실행만으로 웹 연결이 생성되지는 않습니다.
+This starts a stdio MCP server for an MCP client to launch or communicate with. ChatGPT access still requires the tunnel and registration described above.
 
-## Windows 빌드
+## Build the Windows app
 
-`build-desktop.py`는 Windows에서 실행하는 패키징 스크립트입니다. C# 소스와 테스트를 컴파일한 뒤 설치 파일을 생성합니다. Windows .NET Framework C# 컴파일러를 사용합니다.
+`build-desktop.py` uses the Windows .NET Framework C# compiler, runs the C# checks, and packages a per-user installer. Run it on Windows with Python and a prepared payload directory.
 
-빌드 전에 별도 payload 폴더를 준비해야 합니다. 의존성을 자동 다운로드하는 스크립트는 아직 없습니다.
+The bundle used during development contained:
 
-- `python/`: CPython 3.14.7 Windows x64 embeddable 배포본
-- `python/Lib/site-packages/`: Windows용 `mcp==2.2.0`과 의존성
-- Python `_pth` 파일: `Lib/site-packages`, payload 루트(`..`), `import site` 포함
-- `bin/`: tunnel-client v0.0.14 Windows 실행 파일과 배포본의 동반 파일·라이선스
+- CPython **3.14.7**, Windows x64 embeddable distribution, under `payload/python/`.
+- Windows-compatible **`mcp==2.2.0`** and its dependencies under `payload/python/Lib/site-packages/`.
+- **tunnel-client v0.0.14** for Windows, its companion `cloudflared.exe`, manifests, and license notices under `payload/bin/`.
+
+For that embedded Python version, `python314._pth` contains:
+
+```text
+python314.zip
+.
+Lib/site-packages
+..
+import site
+```
+
+Dependency downloads and payload preparation are currently manual. Preserve all dependency license notices. Do not include user settings, keys, notes, or tunnel profiles in the payload.
+
+From the repository root:
 
 ```powershell
 python .\build-desktop.py --source . --payload C:\build\payload --output C:\build\dist
 ```
 
-사용자 설정, API 키, 노트와 터널 프로필은 payload에 넣지 않습니다. 실행 파일·다운로드한 의존성은 소스 저장소에 포함하지 않습니다. 의존성 재배포 시 원래 라이선스 고지를 유지해야 합니다.
+The output is `C:\build\dist\ObsidianChatGPT-Setup.exe`. The installer is designed to preserve existing settings and encrypted keys during upgrades. No Python or WSL installation is required on the recipient's PC when using a complete installer bundle.
 
-## 검증
+## Verification
+
+Run the Python server tests:
 
 ```sh
 python -m unittest -v test_server
 ```
 
-Windows 빌드 스크립트는 `AppTests.cs`, `InstallerTests.cs`를 실행합니다. 예약 작업 보호 검증은 별도이며, 동일 이름의 작업이 이미 있으면 실행을 거부합니다.
+The Windows build runs `desktop/AppTests.cs` and `desktop/InstallerTests.cs`. A separate scheduled-task ownership check is available:
 
 ```powershell
 .\desktop\TaskOwnershipTests.ps1 -AppPath C:\build\payload\ObsidianChatGPT.exe
 ```
 
-테스트 통과가 실제 Windows 설치 및 ChatGPT 연결 검증을 대신하지는 않습니다.
+That check refuses to run if the named scheduled task already exists and removes its temporary task afterward. Automated checks do not replace actual installation, UI inspection, or a ChatGPT tool call.
+
+## Source layout
+
+- `server.py` — read-only Vault tools.
+- `desktop/App.cs` — settings UI, encrypted key storage, and background connection.
+- `desktop/Help.cs` — offline setup guide and troubleshooting.
+- `desktop/Installer.cs` — installation and removal.
+- `build-desktop.py` — Windows compilation and packaging.
+- `test_server.py`, `desktop/*Tests*` — verification code.
+
+## License
+
+A project license has not yet been selected. Third-party components retain their respective licenses.
